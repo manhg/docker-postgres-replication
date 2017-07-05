@@ -1,5 +1,5 @@
 # -*- mode: conf -*-
-FROM postgres:9.5
+FROM postgres:9.6-alpine
 
 MAINTAINER me@nebirhos.com
 
@@ -17,9 +17,21 @@ ENV REPLICATION_PASSWORD ""
 ENV POSTGRES_MASTER_SERVICE_HOST localhost
 ENV POSTGRES_MASTER_SERVICE_PORT 5432
 
+RUN apk --no-cache add \
+        ca-certificates \
+        libuuid \
+        openssl \
+        pcre \
+        tzdata \
+        zlib
+
+COPY replica.conf /tmp/
 COPY 10-config.sh /docker-entrypoint-initdb.d/
 COPY 20-replication.sh /docker-entrypoint-initdb.d/
+
 # Evaluate vars inside PGDATA at runtime.
 # For example HOSTNAME in 'ENV PGDATA=/mnt/$HOSTNAME'
 # is resolved runtime rather then during build
-RUN sed -i 's/set -e/set -e -x\nPGDATA=$(eval echo "$PGDATA")/' /docker-entrypoint.sh
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN rm /etc/localtime \
+    && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime

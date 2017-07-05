@@ -33,6 +33,9 @@ fi
 # allow the container to be started with `--user`
 if [ "$1" = 'postgres' ] && [ "$(id -u)" = '0' ]; then
 	mkdir -p "$PGDATA"
+    openssl req  -nodes -new -x509  -keyout "$PGDATA"/server.key -out "$PGDATA"/server.crt \
+        -subj "/C=JP/ST=Tokyo/L=Tokyo/O=DB/CN=www.tokyo"
+    chmod 600 "$PGDATA"/server.key "$PGDATA"/server.crt
 	chown -R postgres "$PGDATA"
 	chmod 700 "$PGDATA"
 
@@ -47,7 +50,7 @@ if [ "$1" = 'postgres' ] && [ "$(id -u)" = '0' ]; then
 		chmod 700 "$POSTGRES_INITDB_XLOGDIR"
 	fi
 
-	exec gosu postgres "$BASH_SOURCE" "$@"
+	exec su-exec postgres "$BASH_SOURCE" "$@"
 fi
 
 if [ "$1" = 'postgres' ]; then
